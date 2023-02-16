@@ -1,130 +1,135 @@
-import React, {useState, useEffect} from 'react';
-import axios from "axios";
-import {Table, Popconfirm, Button, Space, Form, Input} from "antd";
-import Item from 'antd/es/list/Item';
-import {is} from "lodash";
+import React, { useState } from 'react';
+import { Table, Popconfirm, Button, Space, Form, Input } from "antd";
+import { is, values } from "lodash";
 
 const Datatable = () => {
-    const[griddata, setgridData] = useState([]);
-    const[loading, setLoading] = useState(false);
-    const[editRowKey, setEditRowKey] = useState("");
-
-    // useEffect(() => {
-    //     loadData();
-
-    // },[])
-
-    // const loadData = async () => {
-    //     setLoading(true);
-
-    //     const response = await axios.get("https://mock-api-1.vercel.app/");
-    //    // setgridData(JSON.parse);
-    //    console.log(response.data.toString());
-    //     setLoading(false);
-    // }
-  // console.log(griddata);
-
-
-  
+  const [griddata, setGridData] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [editRowKey, setEditRowKey] = useState("");
+  const [form] = Form.useForm();
 
   const handleDelete = (record) => {
-    const dataSource = [...Data];
+    const dataSource = [...griddata];
     const filteredData = dataSource.filter((item) => item.id !== record.id);
-    setgridData(filteredData);
-
+    setGridData(filteredData);
   };
 
-  const isEding = (record) =>{
+  const isEditing = (record) => {
     return record.key === editRowKey;
+  };
 
-  }
+  const cancel = () => {
+    setEditRowKey("");
+  };
 
-  const cancel = () => {};
-  const save = () => {};
-  const edit = () => {};
+  const save = async (key) => {
+    try {
+      const row = await form.validateFields();
+      const newData = [...griddata];
+      const index = newData.findIndex((item) => key === item.key);
 
+      if (index > -1) {
+        const item = newData[index];
+        newData.splice(index, 1, { ...item, ...row });
+        setGridData(newData);
+        setEditRowKey("");
+      } else {
+        newData.push(row);
+        setGridData(newData);
+        setEditRowKey("");
+      }
+    } catch (errInfo) {
+      console.log("Validate Failed:", errInfo);
+    }
+  };
 
-  
+  const edit = (record) => {
+    form.setFieldsValue({
+      id: "",
+      Timestamp: "",
+      title: "",
+      Description: "",
+      ...record
+    });
+    setEditRowKey(record.key);
+  };
 
-    const columns = [
-        {
-            title: "ID",
-            dataIndex: "id",
-        },
-        {
-            title: "TimeStamp",
-            dataIndex: "Timestamp",
-            align: "center",
-            editTable: false
-        },
-        {
-            title: "Title",
-            dataIndex: "title",
-            align: "center",
-            editTable: true
-        },
-        {
-            title: "Description",
-            dataIndex: "Description",
-            align: "center",
-            editTable: true
-        },
-        {
-            title: "DueDate",
-            dataIndex: "Due Date",
-            align: "center",
-            editTable: true
-        },
-        {
-            title: "Status",
-            dataIndex: "Status",
-            align: "center",
-            editTable: true
-        },
-        {
-          title: "Action",
-          dataIndex: "Action",
-          align: "center",
-          render: (_, record) => {
-            const editTable = isEding(record);
-            if (Data.length >= 1) {
-              return (
-                <Space>
-                   <Popconfirm title="Are you sure you want to delete?" onConfirm={() => handleDelete(record)}>
-                  <Button danger type="primary">
-                    Delete
-                  </Button>
-                </Popconfirm>
-                {editTable ?(
+  const columns = [
+    {
+      title: "ID",
+      dataIndex: "id",
+      key: "id",
+    },
+    {
+      title: "TimeStamp",
+      dataIndex: "Timestamp",
+      key: "Timestamp",
+      align: "center",
+      editable: false,
+    },
+    {
+      title: "Title",
+      dataIndex: "title",
+      key: "title",
+      align: "center",
+      editable: true,
+    },
+    {
+      title: "Description",
+      dataIndex: "Description",
+      key: "Description",
+      align: "center",
+      editable: true,
+    },
+    {
+      title: "DueDate",
+      dataIndex: "DueDate",
+      key: "DueDate",
+      align: "center",
+      editable: true,
+    },
+    {
+      title: "Status",
+      dataIndex: "Status",
+      key: "Status",
+      align: "center",
+      editable: true,
+    },
+    {
+      title: "Action",
+      key: "action",
+      align: "center",
+      render: (_, record) => {
+        const editable = isEditing(record);
+        return editable ? (
+          <Space size="middle">
+            <Button type="primary" onClick={() => save(record.key)}>
+              Save
+            </Button>
+            <Popconfirm title="Sure to cancel?" onConfirm={cancel}>
+              <Button>Cancel</Button>
+            </Popconfirm>
+          </Space>
+        ) : (
+          <Space size="middle">
+            <Button
+              type="primary"
+              disabled={editRowKey !== ""}
+              onClick={() => edit(record)}
+            >
+              Edit
+            </Button>
+            <Popconfirm title="Sure to delete?" onConfirm={() => handleDelete(record)}>
+              <Button type="primary" danger>
+                Delete
+              </Button>
+            </Popconfirm>
+          </Space>
+        );
+      },
+    },
+  ];
 
-              
-                  <span> 
-                    <Space size = "middle">
-                      <Button onClick={()=> save(record.key)} 
-                      type="primary" 
-                      style={{marginRight: 8}}> Save  </Button>
-                      <Popconfirm title = "Are you sure to cancel ?" onConfirm={cancel}>
-                        <Button>cancel</Button>
-                      </Popconfirm>
-                      </Space>
-                      </span>
-                        ): (
-              
-                <Button onClick={() => edit(record)} type="primary">
-                  Edit
-                </Button>
-                  )}
-
-                </Space>
-               
-              );
-            } else {
-              return null;
-            }
-          }
-        }
-        
-            ];
 
     const Data = [
         {
@@ -136,207 +141,20 @@ const Datatable = () => {
             "Due Date": "05/15/2023",
             "Status": "Done",
           },
-          {
-            "userId": 1,
-            "id": 2,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 3,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 4,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 5,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 6,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 7,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 8,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 9,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 10,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 11,
-            "id": 1,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 12,
-            "id": 1,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 12,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 13,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 13,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 14,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 15,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 16,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 17,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 18,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 19,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-          {
-            "userId": 1,
-            "id": 20,
-            "Timestamp": "02/15/2023 --> 7:30 pm",
-            "title": "delectus aut autem",
-            "Description": "Job descriptions are also known as job specifications",
-            "Due Date": "05/15/2023",
-            "Status": "Done",
-          },
-    ]
+          
+        ]
     
-
-    
-  return (
+return (
     <div>
+         <Form form={form}component={false}>;
          <Table
          columns={columns}
          dataSource={Data}
          bordered
          loading={loading}
          />
+         </Form>
+        
         
     </div>
   )
