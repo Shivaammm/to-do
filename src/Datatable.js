@@ -1,11 +1,13 @@
 import React, {useState, useEffect} from 'react';
 import axios from "axios";
-import {Table, Popconfirm, Button} from "antd";
+import {Table, Popconfirm, Button, Space, Form, Input} from "antd";
 import Item from 'antd/es/list/Item';
+import {is} from "lodash";
 
 const Datatable = () => {
     const[griddata, setgridData] = useState([]);
     const[loading, setLoading] = useState(false);
+    const[editRowKey, setEditRowKey] = useState("");
 
     // useEffect(() => {
     //     loadData();
@@ -22,12 +24,27 @@ const Datatable = () => {
     // }
   // console.log(griddata);
 
-  const handleDelete = (value) => {
+
+  
+
+  const handleDelete = (record) => {
     const dataSource = [...Data];
-    const filterdata = dataSource.filter((item) => item.id !== value.id);
-    setgridData(filterdata);
+    const filteredData = dataSource.filter((item) => item.id !== record.id);
+    setgridData(filteredData);
+
+  };
+
+  const isEding = (record) =>{
+    return record.key === editRowKey;
+
   }
 
+  const cancel = () => {};
+  const save = () => {};
+  const edit = () => {};
+
+
+  
 
     const columns = [
         {
@@ -69,13 +86,37 @@ const Datatable = () => {
           dataIndex: "Action",
           align: "center",
           render: (_, record) => {
+            const editTable = isEding(record);
             if (Data.length >= 1) {
               return (
-                <Popconfirm title="Are you sure you want to delete?" onConfirm={() => handleDelete(record)}>
+                <Space>
+                   <Popconfirm title="Are you sure you want to delete?" onConfirm={() => handleDelete(record)}>
                   <Button danger type="primary">
                     Delete
                   </Button>
                 </Popconfirm>
+                {editTable ?(
+
+              
+                  <span> 
+                    <Space size = "middle">
+                      <Button onClick={()=> save(record.key)} 
+                      type="primary" 
+                      style={{marginRight: 8}}> Save  </Button>
+                      <Popconfirm title = "Are you sure to cancel ?" onConfirm={cancel}>
+                        <Button>cancel</Button>
+                      </Popconfirm>
+                      </Space>
+                      </span>
+                        ): (
+              
+                <Button onClick={() => edit(record)} type="primary">
+                  Edit
+                </Button>
+                  )}
+
+                </Space>
+               
               );
             } else {
               return null;
